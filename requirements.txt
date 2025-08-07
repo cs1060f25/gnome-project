@@ -1,0 +1,4 @@
+voyageai
+pinecone
+PyMuPDF
+Pillow

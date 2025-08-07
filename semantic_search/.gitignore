@@ -1,8 +1,0 @@
-__pycache__/
-.env
-oauth.json
-token.json
-test_store_user_token.txt
-test_file_upload.txt
-test_file_search.txt
-.pytest_cache/

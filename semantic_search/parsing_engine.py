@@ -3,9 +3,10 @@ from urllib.request import urlopen
 from fitz import open, Matrix
 from PIL import Image
 from pathlib import Path
+from typing import List
 
 
-def parse_local_pdf(path: str, zoom: float = 1.0) -> list[Image]:
+def parse_local_pdf(path: str, zoom: float = 1.0) -> List[Image.Image]:
     """
     Convert a local PDF file to a list of PIL Images.
     
@@ -46,7 +47,9 @@ def parse_local_pdf(path: str, zoom: float = 1.0) -> list[Image]:
     return images
 
 
-def parse_binary_pdf(binary_data: BytesIO, zoom: float = 1.0) -> list[Image]:
+def parse_binary_pdf(binary_data: BytesIO, zoom: float = 1.0) -> (
+    List[Image.Image]
+):
     """
     Convert binary PDF data to a list of PIL Images.
     

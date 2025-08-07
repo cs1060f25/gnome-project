@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import List
 from PIL import Image
 from voyageai import Client
 from os import environ
 
 
-def init_voyage():
+def init_voyage() -> Client:
     """
     Initialize the Voyage AI client.
     
@@ -24,9 +24,7 @@ def init_voyage():
         raise Exception(f"Failed to initialize Voyage client: {str(e)}.")
 
 
-def embed_pdf(images: List[Image.Image], voyage_client: Client) -> (
-    Optional[List[List[float]]]
-):
+def embed_pdf(images: List[Image.Image], voyage_client: Client) -> List[float]:
     """
     Generate embeddings a PDF document using Voyage AI.
     
@@ -43,14 +41,16 @@ def embed_pdf(images: List[Image.Image], voyage_client: Client) -> (
         raise ValueError("No PDF page images were found.")
     if not voyage_client:
         raise ValueError("No Voyage AI client was provided.")
-    if not isinstance(images, List[Image.Image]):
-        raise ValueError("PDF page images must be a list of PIL images.")
+    if not isinstance(images, list):
+        raise TypeError("PDF images must be a list of PIL images.")
+    if not all(isinstance(img, Image.Image) for img in images):
+        raise TypeError("All images must be PIL Images.")
     if not isinstance(voyage_client, Client):
         raise ValueError("Voyage client is not the correct object type.")
 
     try:
         response = voyage_client.multimodal_embed(
-            inputs=images,
+            inputs=[images],
             model="voyage-multimodal-3",
             input_type="document"
         ).embeddings[0]
@@ -60,7 +60,7 @@ def embed_pdf(images: List[Image.Image], voyage_client: Client) -> (
     return response
 
 
-def embed_query(query: str, voyage_client: Client) -> Optional[List[float]]:
+def embed_query(query: str, voyage_client: Client) -> List[float]:
     """
     Generate embeddings for a search query using Voyage AI.
     

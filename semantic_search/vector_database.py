@@ -1,16 +1,17 @@
 from pinecone import Pinecone
+from pinecone.data.index import Index
 from os import environ
-from typing import List, Dict, Any
+from typing import List, Dict
 from voyageai import Client
-from embedding_engine import embed_query
+from .embedding_engine import embed_query
 
 
-def init_pinecone_idx():
+def init_pinecone_idx() -> Index:
     """
     Initialize the Pinecone client and connect to the index.
     
     Returns:
-        Pinecone.Index: A Pinecone index object.
+        Index: A Pinecone index object.
     """
     try:
         api_key = environ.get("PINECONE_API_KEY")
@@ -28,9 +29,9 @@ def init_pinecone_idx():
 
 
 def semantic_search(
-    query: str, pinecone_idx: Pinecone.Index, voyage_client: Client, top_k: int,
+    query: str, pinecone_idx: Index, voyage_client: Client, top_k: int,
     namespace: str
-) -> List[Dict[str, Any]]:
+) -> List[Dict]:
     """
     Perform semantic search in a Pinecone namespace.
     
@@ -42,7 +43,7 @@ def semantic_search(
         namespace (str): Namespace to search in.
         
     Returns:
-        List[Dict[str, Any]]: List of matches with id, score, and metadata.
+        List[Dict]: List of matches with id, score, and metadata.
     """
     if not query:
         raise ValueError("No query was provided.")
@@ -57,7 +58,7 @@ def semantic_search(
 
     if not isinstance(query, str):
         raise ValueError("Query must be a string.")
-    if not isinstance(pinecone_idx, Pinecone.Index):
+    if not isinstance(pinecone_idx, Index):
         raise ValueError("Pinecone index is not the correct object type.")
     if not isinstance(voyage_client, Client):
         raise ValueError("Voyage client is not the correct object type.")
@@ -88,9 +89,9 @@ def semantic_search(
 
 
 def store_embeddings(
-    file_name: str, pinecone_idx: Pinecone.Index, embeddings: List[float],
+    file_name: str, pinecone_idx: Index, embeddings: List[float],
     namespace: str
-):
+) -> None:
     """
     Store embedded file content in Pinecone.
     
@@ -111,9 +112,11 @@ def store_embeddings(
 
     if not isinstance(file_name, str):
         raise ValueError("File name must be a string.")
-    if not isinstance(pinecone_idx, Pinecone.Index):
-        raise ValueError("Pinecone index is not the correct object type.")
-    if not isinstance(embeddings, List[float]):
+    if not isinstance(pinecone_idx, Index):
+        raise ValueError(f"Pinecone index is not the correct object type.")
+    if not isinstance(embeddings, list):
+        raise ValueError("Embeddings must be a list of floats.")
+    if not all(isinstance(x, float) for x in embeddings):
         raise ValueError("Embeddings must be a list of floats.")
     if not len(embeddings) == 1024:
         raise ValueError("Embeddings must be a list of 1024 floats.")

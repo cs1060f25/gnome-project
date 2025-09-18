@@ -1,4 +1,6 @@
+flask
 voyageai
 pinecone
 PyMuPDF
 Pillow
+python-dotenv

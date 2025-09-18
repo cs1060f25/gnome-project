@@ -1,0 +1,304 @@
+:root {
+  --bg: #000000;
+  --text: #ffffff;
+  --muted: #cccccc;
+  --brand: #805bff;
+  --ink: #ffffff;
+  --border: #333333;
+  --shadow: 0 10px 30px rgba(128, 91, 255, 0.15);
+  /* Typography scales */
+  --counter-size: clamp(36px, 8vw, 70px);
+  --desc-scale: 0.65; /* description ~65% of the counter size */
+  --desc-size: clamp(26px, calc(var(--counter-size) * var(--desc-scale)), 48px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Rubik, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.container {
+  width: min(1000px, 92%);
+  margin: 0 auto;
+}
+
+/* animated waves background */
+.bg {
+  position: fixed;
+  inset: -10vmax 0 auto 0;
+  height: 80vmax;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.wave {
+  position: absolute;
+  width: 120vmax;
+  height: 120vmax;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+}
+
+.wave-a {
+  left: -40vmax;
+  top: -50vmax;
+  background: radial-gradient(closest-side, rgba(128, 91, 255, 0.55), rgba(128, 91, 255, 0) 60%);
+  animation: drift 20s ease-in-out infinite alternate;
+}
+
+.wave-b {
+  right: -30vmax;
+  top: -20vmax;
+  background: radial-gradient(closest-side, rgba(156, 119, 255, 0.45), rgba(156, 119, 255, 0) 60%);
+  animation: drift 24s ease-in-out infinite alternate-reverse;
+}
+
+.wave-c {
+  left: 10vmax;
+  top: 10vmax;
+  background: radial-gradient(closest-side, rgba(90, 60, 200, 0.35), rgba(90, 60, 200, 0) 60%);
+  animation: drift 28s ease-in-out infinite alternate;
+}
+
+/* hero */
+.hero {
+  text-align: center;
+  padding: clamp(40px, 10vw, 80px) 0 clamp(40px, 10vw, 80px);
+  position: relative;
+  z-index: 10;
+}
+
+.hero-logo {
+  height: clamp(120px, 18vw, 200px);
+  width: auto;
+  margin-bottom: 10px;
+  animation: fadeInFromTop 1s ease-out 0.2s forwards;
+  opacity: 0;
+  max-width: 100%;
+}
+
+.hero h1 {
+  font-size: 26px;
+  line-height: 1.4;
+  margin: 0 auto;
+  max-width: 1000px;
+  padding: 0 12px;
+  color: var(--ink);
+  font-style: italic;
+  text-align: center;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+
+.hero h1 span {
+  font-size: inherit;
+}
+
+.headline-cursor {
+  color: var(--brand);
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(128, 91, 255, 0.8);
+}
+
+/* counter */
+.counter-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0 60px;
+  position: relative;
+  z-index: 10;
+}
+
+.counter {
+  font-weight: 800;
+  font-size: var(--counter-size);
+  letter-spacing: 0.5px;
+  color: var(--ink);
+  animation: fadeInFromTop 1s ease-out 4s forwards;
+  opacity: 0;
+  position: relative;
+}
+
+/* stage (video placeholder) */
+.stage {
+  padding: 60px 0 80px;
+  position: relative;
+  z-index: 10;
+}
+
+.stage-inner {
+  position: relative;
+  border-radius: 18px;
+  background: #000;
+  border: 2px solid rgba(128, 91, 255, 0.35);
+  aspect-ratio: 16/9;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: fadeInFromTop 1s ease-out 5s forwards;
+  opacity: 0;
+}
+
+.stage-inner .demo-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+
+/* waitlist */
+.checkout {
+  padding: 40px 0 120px;
+  position: relative;
+  z-index: 10;
+  text-align: center;
+}
+
+.big-join-btn {
+  border: 0;
+  padding: clamp(20px, 3.5vw, 30px) clamp(56px, 12vw, 140px);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #805bff, #5e3acc);
+  color: #fff;
+  font-weight: 800;
+  font-size: 28px;
+  box-shadow: 0 10px 24px rgba(128, 91, 255, 0.35);
+  cursor: not-allowed;
+  animation: fadeInFromTop 1s ease-out 6s forwards;
+  opacity: 0;
+  width: min(92%, 450px);
+}
+
+/* When revealed via JS, show immediately with the same effect (no delay) */
+.big-join-btn.revealed {
+  animation: fadeInFromTop 0.4s ease-out 0s forwards;
+  opacity: 1;
+}
+
+@keyframes purpleGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05), 0 0 20px rgba(128, 91, 255, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05), 0 0 40px rgba(128, 91, 255, 0.8);
+  }
+}
+
+/* footer */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 26px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* animations */
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInLetter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateY(0px) scale(1);
+  }
+
+  to {
+    transform: translateY(40px) scale(1.05);
+  }
+}
+
+@keyframes circlingGlow {
+  0% {
+    box-shadow: 0 0 10px rgba(128, 91, 255, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(128, 91, 255, 1), 0 0 60px rgba(128, 91, 255, 0.8);
+  }
+
+  100% {
+    box-shadow: 0 0 10px rgba(128, 91, 255, 0.5);
+  }
+}
+
+@keyframes whiteFade {
+
+  0%,
+  100% {
+    color: var(--ink);
+  }
+
+  50% {
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+@keyframes letterGlow {
+
+  0%,
+  100% {
+    text-shadow: none;
+    color: var(--ink);
+  }
+
+  50% {
+    text-shadow: 0 0 8px rgba(128, 91, 255, 0.8), 0 0 16px rgba(128, 91, 255, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+  }
+}

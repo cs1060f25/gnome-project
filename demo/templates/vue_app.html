@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gnome - PDF Search</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #fff;
+            color: #1c1c1c;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #f7f9fa;
+            border-right: 1px solid #e5e5e5;
+            padding: 20px 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1c1c1c;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #637282;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: #e5e5e5;
+        }
+
+        .nav-item.active {
+            background-color: #e7f5ff;
+            color: #0061fe;
+            border-left: 3px solid #0061fe;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .header {
+            background-color: #fff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1c1c1c;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 36px 8px 12px;
+            border: 1px solid #d0d4d9;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #0061fe;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #637282;
+        }
+
+        .btn-primary {
+            background-color: #0061fe;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0052d9;
+        }
+
+        .btn-primary:disabled {
+            background-color: #b0b7c3;
+            cursor: not-allowed;
+        }
+
+        .content-area {
+            padding: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #637282;
+        }
+
+        .results-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #637282;
+        }
+
+        .results-select {
+            padding: 4px 8px;
+            border: 1px solid #d0d4d9;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .file-table {
+            width: 100%;
+            background-color: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .file-table-header {
+            background-color: #f7f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #637282;
+            text-transform: uppercase;
+        }
+
+        .file-table-row {
+            display: flex;
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+            align-items: center;
+        }
+
+        .file-table-row:hover {
+            background-color: #f7f9fa;
+        }
+
+        .file-table-row:last-child {
+            border-bottom: none;
+        }
+
+        .col-name {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .col-date {
+            width: 200px;
+            color: #637282;
+            font-size: 14px;
+        }
+
+        .col-relevance {
+            width: 120px;
+            text-align: right;
+            color: #637282;
+            font-size: 14px;
+        }
+
+        .file-icon {
+            width: 32px;
+            height: 32px;
+            background-color: #dc2626;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .file-name {
+            font-size: 14px;
+            color: #1c1c1c;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 20px;
+            background-color: #f7f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #d0d4d9;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1c1c1c;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            color: #637282;
+        }
+
+        .upload-area {
+            border: 2px dashed #d0d4d9;
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            background-color: #f7f9fa;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .upload-area.drag-over {
+            border-color: #0061fe;
+            background-color: #e7f5ff;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #1c1c1c;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background-color: #10b981;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .relevance-badge {
+            background-color: #e7f5ff;
+            color: #0061fe;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    {% raw %}
+    <div id="app">
+        <div class="app-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">G</div>
+                    <div class="logo-text">Gnome</div>
+                </div>
+                <div class="nav-item" :class="{ active: currentView === 'files' }" @click="currentView = 'files'; clearSearch()">
+                    All Files
+                </div>
+                <div class="nav-item" :class="{ active: currentView === 'search' }" @click="currentView = 'search'">
+                    Search
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Header -->
+                <div class="header">
+                    <h1 class="header-title">{{ currentView === 'files' ? 'All Files' : 'Search Results' }}</h1>
+
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Search your PDFs..."
+                            v-model="searchQuery"
+                            @keyup.enter="performSearch"
+                        >
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </div>
+
+                    <div class="header-actions">
+                        <input
+                            type="file"
+                            ref="fileInput"
+                            class="file-input"
+                            accept=".pdf"
+                            @change="handleFileUpload"
+                        >
+                        <button class="btn-primary" @click="$refs.fileInput.click()" :disabled="uploading">
+                            <span v-if="!uploading">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </span>
+                            <span v-else class="loading-spinner"></span>
+                            {{ uploading ? 'Uploading...' : 'Upload PDF' }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="content-area">
+                    <!-- Upload Area (shown when dragging) -->
+                    <div
+                        v-if="currentView === 'files'"
+                        class="upload-area"
+                        :class="{ 'drag-over': isDragging }"
+                        @drop.prevent="handleDrop"
+                        @dragover.prevent="isDragging = true"
+                        @dragleave.prevent="isDragging = false"
+                    >
+                        <div class="empty-state-icon">📄</div>
+                        <p>Drag and drop PDFs here or click the Upload button</p>
+                    </div>
+
+                    <!-- Results Selector -->
+                    <div v-if="currentView === 'search' && searchResults.length > 0" class="section-header">
+                        <div class="section-title">Search Results</div>
+                        <div class="results-selector">
+                            <label for="topK">Show top:</label>
+                            <select id="topK" v-model="topK" class="results-select" @change="performSearch">
+                                <option value="3">3</option>
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- File Table -->
+                    <div v-if="displayFiles.length > 0" class="file-table">
+                        <div class="file-table-header">
+                            <div class="col-name">Name</div>
+                            <div class="col-date">{{ currentView === 'search' ? 'Uploaded' : 'Modified' }}</div>
+                            <div v-if="currentView === 'search'" class="col-relevance">Relevance</div>
+                        </div>
+                        <div v-for="file in displayFiles" :key="file.name" class="file-table-row">
+                            <div class="col-name">
+                                <div class="file-icon">PDF</div>
+                                <div class="file-name">{{ file.name }}</div>
+                            </div>
+                            <div class="col-date">{{ formatDate(file.uploadDate) }}</div>
+                            <div v-if="currentView === 'search'" class="col-relevance">
+                                <span class="relevance-badge">{{ Math.round(file.similarity * 100) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty States -->
+                    <div v-else-if="currentView === 'files' && !loading" class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <div class="empty-state-title">No files uploaded yet</div>
+                        <div class="empty-state-text">Upload your first PDF to get started</div>
+                    </div>
+
+                    <div v-else-if="currentView === 'search' && searchPerformed && !loading" class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-title">No results found</div>
+                        <div class="empty-state-text">Try searching with different keywords</div>
+                    </div>
+
+                    <div v-else-if="currentView === 'search' && !searchPerformed" class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-title">Search your PDFs</div>
+                        <div class="empty-state-text">Enter a query in the search bar above</div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div v-if="loading" class="empty-state">
+                        <div class="loading-spinner" style="width: 48px; height: 48px; margin: 0 auto;"></div>
+                        <div class="empty-state-title" style="margin-top: 20px;">{{ loadingMessage }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div v-if="toast.visible" :class="['toast', toast.type]">
+            {{ toast.message }}
+        </div>
+    </div>
+    {% endraw %}
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    currentView: 'files',
+                    files: [],
+                    searchResults: [],
+                    searchQuery: '',
+                    searchPerformed: false,
+                    topK: 5,
+                    loading: false,
+                    loadingMessage: 'Loading...',
+                    uploading: false,
+                    isDragging: false,
+                    toast: {
+                        visible: false,
+                        message: '',
+                        type: 'success'
+                    }
+                };
+            },
+            computed: {
+                displayFiles() {
+                    if (this.currentView === 'search') {
+                        return this.searchResults;
+                    }
+                    return this.files;
+                }
+            },
+            mounted() {
+                this.fetchFiles();
+            },
+            methods: {
+                async fetchFiles() {
+                    this.loading = true;
+                    this.loadingMessage = 'Loading files...';
+                    try {
+                        const response = await fetch('/api/files');
+                        const data = await response.json();
+                        this.files = data.files || [];
+                    } catch (error) {
+                        this.showToast('Error loading files', 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    await this.uploadFile(file);
+                    event.target.value = '';
+                },
+
+                async handleDrop(event) {
+                    this.isDragging = false;
+                    const files = event.dataTransfer.files;
+                    if (files.length > 0 && files[0].type === 'application/pdf') {
+                        await this.uploadFile(files[0]);
+                    }
+                },
+
+                async uploadFile(file) {
+                    this.uploading = true;
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    try {
+                        const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.files.unshift({
+                                name: file.name,
+                                uploadDate: new Date().toISOString()
+                            });
+                            this.showToast(data.message || `Successfully uploaded ${file.name}`, 'success');
+                        } else {
+                            this.showToast(data.error || 'Upload failed', 'error');
+                        }
+                    } catch (error) {
+                        this.showToast('Error uploading file', 'error');
+                    } finally {
+                        this.uploading = false;
+                    }
+                },
+
+                async performSearch() {
+                    if (!this.searchQuery.trim()) return;
+
+                    this.loading = true;
+                    this.loadingMessage = 'Searching...';
+                    this.currentView = 'search';
+                    this.searchPerformed = true;
+
+                    try {
+                        const response = await fetch('/api/search', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                query: this.searchQuery,
+                                top_k: parseInt(this.topK)
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.searchResults = data.results || [];
+                        } else {
+                            this.showToast(data.error || 'Search failed', 'error');
+                        }
+                    } catch (error) {
+                        this.showToast('Error performing search', 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                clearSearch() {
+                    this.searchQuery = '';
+                    this.searchResults = [];
+                    this.searchPerformed = false;
+                },
+
+                formatDate(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - date);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 0) return 'Today';
+                    if (diffDays === 1) return 'Yesterday';
+                    if (diffDays < 7) return `${diffDays} days ago`;
+
+                    return date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                },
+
+                showToast(message, type = 'success') {
+                    this.toast = {
+                        visible: true,
+                        message,
+                        type
+                    };
+
+                    setTimeout(() => {
+                        this.toast.visible = false;
+                    }, 3000);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

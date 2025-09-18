@@ -1,15 +1,10 @@
 from pathlib import Path
-from typing import List
 from flask import (
     Flask,
     render_template,
     request,
-    redirect,
-    url_for,
-    flash,
+    jsonify,
 )
-import os
-import logging
 import traceback
 import sys
 import secrets
@@ -45,18 +40,28 @@ NAMESPACE = "demo"
 
 @app.route("/")
 def index():
-    """Home page: upload form & list of uploaded files."""
-    files: List[str] = [f.name for f in UPLOAD_FOLDER.glob("*.pdf")]
-    return render_template("index.html", files=files)
+    """Serve Vue.js single-page application."""
+    return render_template("vue_app.html")
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
-    """Handle PDF upload and pipeline processing."""
+@app.route("/api/files")
+def api_files():
+    """API endpoint to get list of uploaded files."""
+    files = [
+        {"name": f.name, "uploadDate": f.stat().st_mtime * 1000}
+        for f in UPLOAD_FOLDER.glob("*.pdf")
+    ]
+    files.sort(key=lambda x: x["uploadDate"], reverse=True)
+    return jsonify({"files": files})
+
+
+@app.route("/api/upload", methods=["POST"])
+def api_upload():
+    """API endpoint to handle PDF upload and pipeline processing."""
     file = request.files.get("file")
     if not file or file.filename == "":
-        flash("No file selected.")
-        return redirect(url_for("index"))
+        return jsonify({"error": "No file selected."}), 400
+
     save_path = UPLOAD_FOLDER / file.filename
     file.save(save_path)
 
@@ -67,39 +72,44 @@ def upload():
         embedding = embed_pdf(images, VOYAGE_CLIENT)
         # Store embeddings in Pinecone
         store_embeddings(file.filename, PINECONE_IDX, embedding, NAMESPACE)
-        flash(f"Uploaded and indexed {file.filename} ")
+        return jsonify({"message": f"Successfully uploaded and indexed {file.filename}"}), 200
     except Exception as exc:  # pylint: disable=broad-except
         save_path.unlink(missing_ok=True)
         app.logger.error("Upload failed:\n%s", traceback.format_exc())
-        flash(f"Failed to process file: {exc}")
-
-    return redirect(url_for("index"))
+        return jsonify({"error": f"Failed to process file: {exc}"}), 500
 
 
-@app.route("/search", methods=["GET", "POST"])
-def search():
-    """Search page with results."""
-    results = []
-    if request.method == "POST":
-        query = request.form.get("query", "").strip()
-        top_k_raw = request.form.get("top_k", "5")
+@app.route("/api/search", methods=["POST"])
+def api_search():
+    """API endpoint for semantic search."""
+    data = request.get_json()
+    query = data.get("query", "").strip() if data else ""
+    top_k = data.get("top_k", 5) if data else 5
 
-        if not query:
-            flash("Please enter a query.")
-        else:
-            try:
-                top_k = int(top_k_raw)
-                response = semantic_search(
-                    query, PINECONE_IDX, VOYAGE_CLIENT, top_k, NAMESPACE
-                )
-                # Pinecone returns dict with "matches"
-                results = response.get("matches", [])
-            except ValueError:
-                flash("top_k must be an integer.")
-            except Exception as exc:  # pylint: disable=broad-except
-                flash(f"Search failed: {exc}")
+    if not query:
+        return jsonify({"error": "Please enter a query."}), 400
 
-    return render_template("search.html", results=results)
+    try:
+        response = semantic_search(
+            query, PINECONE_IDX, VOYAGE_CLIENT, top_k, NAMESPACE
+        )
+        # Pinecone returns dict with "matches"
+        matches = response.get("matches", [])
+
+        # Format results for frontend
+        results = [
+            {
+                "name": match.get("id", "Unknown"),
+                "similarity": match.get("score", 0),
+                "uploadDate": None  # Can be enhanced later
+            }
+            for match in matches
+        ]
+
+        return jsonify({"results": results}), 200
+    except Exception as exc:  # pylint: disable=broad-except
+        app.logger.error("Search failed:\n%s", traceback.format_exc())
+        return jsonify({"error": f"Search failed: {exc}"}), 500
 
 
 if __name__ == "__main__":

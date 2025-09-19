@@ -41,7 +41,7 @@ NAMESPACE = "demo"
 @app.route("/")
 def index():
     """Serve Vue.js single-page application."""
-    return render_template("vue_app.html")
+    return render_template("index.html")
 
 
 @app.route("/api/files")

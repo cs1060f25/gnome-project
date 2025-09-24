@@ -284,6 +284,7 @@
             border-bottom: 1px solid #f0f0f0;
             transition: background-color 0.2s;
             align-items: center;
+            cursor: pointer;
         }
 
         .file-table-row:hover {
@@ -606,7 +607,7 @@
                             <div class="col-date">Modified</div>
                             <div v-if="currentView === 'files' || currentView === 'search'" class="col-application">Application</div>
                         </div>
-                        <div v-for="file in displayFiles" :key="file.name" class="file-table-row">
+                        <div v-for="file in displayFiles" :key="file.name" class="file-table-row" @click="handleFileClick(file)">
                             <div class="col-name">
                                 <div class="file-icon">PDF</div>
                                 <div class="file-name">{{ file.name }}</div>
@@ -925,6 +926,11 @@
                     setTimeout(() => {
                         this.toast.visible = false;
                     }, 3000);
+                },
+
+                handleFileClick(file) {
+                    // Empty click handler - does nothing but provides clickable feedback
+                    console.log('File clicked:', file.name);
                 }
             }
         }).mount('#app');

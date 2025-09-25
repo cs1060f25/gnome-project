@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gnome</title>
-    <link rel="icon" type="image/x-icon" href="/static/gnome_logo_bg.png">
+    <link rel="icon" type="image/x-icon" href="/static/gnome_icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,6 +19,7 @@
 
         body {
             font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 16px;
             background-color: #f7f9fa;
             color: #1c1c1c;
         }
@@ -29,28 +30,34 @@
         }
 
         .sidebar {
-            width: 280px;
+            width: 216px;
             background-color: #f7f9fa;
             border-right: 1px solid #e5e5e5;
-            padding: 0px 0;
+            padding: 24px 0 0 0;
+            margin-top: 88px;
         }
 
         .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 6px 20px 6px 20px;
-            margin-bottom: 0px;
+            padding: 0px 20px;
+            height: 88px;
+            box-sizing: border-box;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e5e5e5;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .logo {
-            width: 160px;
-            height: 120px;
+            width: 120px;
+            height: 50px;
             border-radius: 8px;
             background-image: url('/static/gnome_logo_black.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
+            flex-shrink: 0;
         }
 
         .logo-text {
@@ -60,15 +67,20 @@
         }
 
         .nav-item {
-            padding: 12px 20px;
+            padding: 12px 48px 12px 48px;
             cursor: pointer;
             color: #637282;
             transition: background-color 0.2s;
             text-align: center;
+            font-size: 16px;
         }
 
         .nav-item:first-of-type {
             margin-top: 3px;
+        }
+
+        .nav-item:last-child {
+            border-bottom: none;
         }
 
         .nav-item:hover {
@@ -92,15 +104,34 @@
             border-bottom: 1px solid #e5e5e5;
             height: 88px;
             padding: 0 48px;
-            display: grid;
-            grid-template-columns: minmax(200px, 1fr) 2fr minmax(200px, 1fr);
+            display: flex;
             align-items: center;
+            gap: 96px;
             position: fixed;
             top: 0;
-            left: 280px;
+            left: 0;
             right: 0;
             z-index: 1000;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            min-width: 800px;
+            overflow-x: auto;
+        }
+
+        /* Simplified media queries for minimum size approach */
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .header {
+                left: 240px;
+                padding: 0 20px;
+                min-width: 700px; /* Maintain minimum size even on mobile */
+            }
+
+            .content-area {
+                padding: 24px 20px;
+            }
         }
 
         .header-title {
@@ -109,6 +140,9 @@
             color: #1c1c1c;
             line-height: 1.2;
             margin: 0;
+            min-width: 150px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .header-app-icon {
@@ -130,25 +164,29 @@
 
         .search-container {
             display: flex;
-            justify-content: center;
+            flex: 1;
             min-width: 0;
         }
 
         .search-input-wrapper {
             position: relative;
-            width: min(750px, 100%);
-            min-width: 250px;
+            width: 100%;
+            min-width: 300px;
+            flex-shrink: 1;
         }
+
 
         .search-input {
             width: 100%;
-            padding: 11px 16px 11px 49px;
+            height: 46px;
+            padding: 10px 16px 10px 44px;
             border: 1px solid #d0d4d9;
             border-radius: 8px;
-            font-size: 19px;
+            font-size: 16px;
             font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             outline: none;
             transition: border-color 0.2s;
+            box-sizing: border-box;
         }
 
         .search-input:focus {
@@ -157,7 +195,7 @@
 
         .search-icon {
             position: absolute;
-            left: 16px;
+            left: 14px;
             top: 50%;
             transform: translateY(-50%);
             color: #637282;
@@ -167,16 +205,21 @@
             background-color: #673ED1;
             color: white;
             border: none;
-            padding: 11px 22px;
+            height: 46px;
+            padding: 10px 20px;
             border-radius: 8px;
-            font-size: 19px;
+            font-size: 16px;
             font-weight: 500;
             font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             cursor: pointer;
             transition: background-color 0.2s;
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 8px;
+            min-width: 150px;
+            flex-shrink: 0;
+            white-space: nowrap;
+            box-sizing: border-box;
         }
 
         .btn-primary:hover {
@@ -216,10 +259,24 @@
         }
 
         .content-area {
-            padding: 24px 48px;
-            margin-top: 108px;
+            padding: 24px 48px 24px 48px;
+            margin-top: 88px;
             max-width: 100%;
             box-sizing: border-box;
+            overflow-x: auto;
+        }
+
+        .page-title {
+            margin: 24px 0 24px 0;
+        }
+
+        .page-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1c1c1c;
+            margin: 0;
+            display: flex;
+            align-items: center;
         }
 
         .section-header {
@@ -260,6 +317,7 @@
 
         .file-table {
             width: 100%;
+            min-width: 600px;
             background-color: #fff;
             border: 1px solid #e5e5e5;
             border-radius: 8px;
@@ -272,10 +330,11 @@
             border-bottom: 1px solid #e5e5e5;
             display: flex;
             padding: 12px 0;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
-            color: #637282;
+            color: #1c1c1c;
             text-transform: none;
+            position: relative;
         }
 
         .file-table-row {
@@ -284,7 +343,7 @@
             border-bottom: 1px solid #f0f0f0;
             transition: background-color 0.2s;
             align-items: center;
-            cursor: pointer;
+            position: relative;
         }
 
         .file-table-row:hover {
@@ -297,34 +356,55 @@
 
         .col-name {
             flex: 1;
+            min-width: 200px;
+            max-width: calc(50% - 74px);
             display: flex;
             align-items: center;
             gap: 12px;
             padding-left: 16px;
+            margin-right: 24px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .col-date {
-            width: 120px !important;
-            color: #637282;
-            font-size: 14px;
-            padding-right: 16px;
-            text-align: center;
+            width: 96px !important;
+            min-width: 96px;
+            color: #1c1c1c;
+            font-size: 16px;
+            padding-right: 0px;
+            text-align: left;
+            white-space: nowrap;
+            flex-shrink: 0;
+            position: absolute;
+            left: 50%;
         }
 
         .col-relevance {
             width: 100px !important;
+            min-width: 100px;
             text-align: right;
             color: #637282;
-            font-size: 14px;
+            font-size: 16px;
             padding-right: 16px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .col-application {
-            width: 120px !important;
+            width: 70px !important;
+            min-width: 70px;
             text-align: center;
-            color: #637282;
-            font-size: 14px;
-            padding-right: 16px;
+            color: #1c1c1c;
+            font-size: 16px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: auto;
+            padding-right: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .file-icon {
@@ -341,9 +421,14 @@
         }
 
         .file-name {
-            font-size: 14px;
+            font-size: 16px;
             color: #1c1c1c;
-            font-weight: 500;
+            font-weight: 400;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 120px;
+            cursor: pointer;
         }
 
         .empty-state {
@@ -485,7 +570,7 @@
 
         .app-name {
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 400;
             color: #1c1c1c;
             margin-bottom: 4px;
         }
@@ -493,6 +578,53 @@
         .app-files-count {
             font-size: 14px;
             color: #637282;
+        }
+
+        .app-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .app-header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .app-icon-large {
+            width: 48px;
+            height: 48px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 8px;
+        }
+
+        .app-header-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: 400;
+            color: #1c1c1c;
+            margin: 0;
+        }
+
+        .app-subtitle {
+            font-size: 16px;
+            color: #637282;
+        }
+
+        /* App-specific styles for when viewing individual app files */
+        .app-files-view .col-date {
+            position: absolute;
+            right: 24px;
+            left: auto;
+            text-align: left;
         }
 
         .app-icon-small {
@@ -512,14 +644,11 @@
         <div class="app-container">
             <!-- Sidebar -->
             <div class="sidebar">
-                <div class="sidebar-header">
-                    <div class="logo"></div>
-                </div>
                 <div class="nav-item" :class="{ active: currentView === 'files' }" @click="currentView = 'files'; clearSearch()">
-                    Recent Files
+                    Recent
                 </div>
                 <div class="nav-item" :class="{ active: currentView === 'applications' }" @click="currentView = 'applications'; clearSearch()">
-                    All Applications
+                    All Files
                 </div>
             </div>
 
@@ -527,15 +656,8 @@
             <div class="main-content">
                 <!-- Header -->
                 <div class="header">
-                    <div>
-                        <h1 v-if="currentView === 'files'" class="header-title">Recent Files</h1>
-                        <h1 v-if="currentView === 'applications'" class="header-title">All Applications</h1>
-                        <h1 v-if="currentView === 'app-files'" class="header-title" style="display: flex; align-items: center; gap: 12px;">
-                            <div class="header-app-icon" :style="{ backgroundImage: selectedApp?.icon }"></div>
-                            {{ selectedApp?.name }} Files
-                        </h1>
-                        <h1 v-if="currentView === 'search'" class="header-title">Search Results</h1>
-                    </div>
+                    <!-- Logo -->
+                    <div class="logo"></div>
 
                     <!-- Search Bar -->
                     <div class="search-container">
@@ -547,7 +669,7 @@
                             <input
                                 type="text"
                                 class="search-input"
-                                placeholder="Search your files with natural language..."
+                                placeholder="Search by meaning"
                                 v-model="searchQuery"
                                 @keyup.enter="performSearch"
                             >
@@ -590,6 +712,15 @@
                 <!-- Content Area -->
                 <div class="content-area">
 
+                    <!-- App Header when viewing specific app -->
+                    <div v-if="currentView === 'app-files' && selectedApp" class="app-header">
+                        <div class="app-header-content">
+                            <div class="app-icon-large" :style="{ backgroundImage: selectedApp.icon }"></div>
+                            <div class="app-header-text">
+                                <h2 class="app-title">{{ selectedApp.name }}</h2>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Applications Grid -->
                     <div v-if="currentView === 'applications'" class="applications-grid">
@@ -601,16 +732,16 @@
                     </div>
 
                     <!-- File Table -->
-                    <div v-if="currentView !== 'applications' && displayFiles.length > 0" class="file-table">
+                    <div v-if="currentView !== 'applications' && displayFiles.length > 0" class="file-table" :class="{ 'app-files-view': currentView === 'app-files' }">
                         <div class="file-table-header">
                             <div class="col-name">Name</div>
                             <div class="col-date">Modified</div>
-                            <div v-if="currentView === 'files' || currentView === 'search'" class="col-application">Application</div>
+                            <div v-if="currentView === 'files' || currentView === 'search'" class="col-application">Location</div>
                         </div>
-                        <div v-for="file in displayFiles" :key="file.name" class="file-table-row" @click="handleFileClick(file)">
+                        <div v-for="file in displayFiles" :key="file.name" class="file-table-row">
                             <div class="col-name">
                                 <div class="file-icon">PDF</div>
-                                <div class="file-name">{{ file.name }}</div>
+                                <div class="file-name" @click="handleFileClick(file)">{{ file.name }}</div>
                             </div>
                             <div class="col-date">{{ formatDate(file.uploadDate) }}</div>
                             <div v-if="currentView === 'files' || currentView === 'search'" class="col-application">
@@ -679,17 +810,17 @@
                     isDragging: false,
                     isButtonDragOver: false,
                     applications: [
-                        { name: 'AWS', icon: 'url("/static/aws_logo.png")' },
-                        { name: 'Dropbox', icon: 'url("/static/dropbox_logo.png")' },
-                        { name: 'Finder', icon: 'url("/static/finder_logo.png")' },
-                        { name: 'GitHub', icon: 'url("/static/github_logo.png")' },
-                        { name: 'Gmail', icon: 'url("/static/gmail_logo.png")' },
-                        { name: 'Google Drive', icon: 'url("/static/google_drive_logo.png")' },
-                        { name: 'Notion', icon: 'url("/static/notion_logo.png")' },
-                        { name: 'OneDrive', icon: 'url("/static/onedrive_logo.png")' },
-                        { name: 'Outlook', icon: 'url("/static/outlook.png")' },
-                        { name: 'iCloud Drive', icon: 'url("/static/icloud_logo.png")' },
-                        { name: 'iCloud Mail', icon: 'url("/static/icloud_mail.png")' }
+                        { name: 'AWS', icon: 'url("/static/aws_icon.png")' },
+                        { name: 'Dropbox', icon: 'url("/static/dropbox_icon.png")' },
+                        { name: 'Finder', icon: 'url("/static/finder_icon.png")' },
+                        { name: 'GitHub', icon: 'url("/static/github_icon.png")' },
+                        { name: 'Gmail', icon: 'url("/static/gmail_icon.png")' },
+                        { name: 'Google Drive', icon: 'url("/static/gdrive_icon.png")' },
+                        { name: 'Notion', icon: 'url("/static/notion_icon.png")' },
+                        { name: 'OneDrive', icon: 'url("/static/onedrive_icon.png")' },
+                        { name: 'Outlook', icon: 'url("/static/outlook_icon.png")' },
+                        { name: 'iCloud Drive', icon: 'url("/static/idrive_icon.png")' },
+                        { name: 'iCloud Mail', icon: 'url("/static/imail_icon.png")' }
                     ],
                     toast: {
                         visible: false,

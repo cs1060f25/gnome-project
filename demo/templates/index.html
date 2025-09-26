@@ -842,9 +842,14 @@
                         return this.files.filter(file => {
                             const storageApps = ['Google Drive', 'Dropbox', 'iCloud Drive', 'OneDrive', 'Finder'];
                             if (!file.assignedApp && storageApps.includes(this.selectedApp.name)) {
-                                const hash = this.hashString(file.name);
-                                const storageAppIndex = hash % storageApps.length;
-                                file.assignedApp = storageApps[storageAppIndex];
+                                // Specific files should be assigned to Finder
+                                if (file.name === 'forgot_to_rename.pdf' || file.name === '37289132442.pdf') {
+                                    file.assignedApp = 'Finder';
+                                } else {
+                                    const hash = this.hashString(file.name);
+                                    const storageAppIndex = hash % storageApps.length;
+                                    file.assignedApp = storageApps[storageAppIndex];
+                                }
                             }
                             return file.assignedApp === this.selectedApp.name;
                         });
@@ -861,10 +866,15 @@
                             // Distribute files among storage applications
                             fileCount = this.files.filter(file => {
                                 if (!file.assignedApp) {
-                                    // Assign files to storage apps based on hash of filename
-                                    const hash = this.hashString(file.name);
-                                    const storageAppIndex = hash % storageApps.length;
-                                    file.assignedApp = storageApps[storageAppIndex];
+                                    // Specific files should be assigned to Finder
+                                    if (file.name === 'forgot_to_rename.pdf' || file.name === '37289132442.pdf') {
+                                        file.assignedApp = 'Finder';
+                                    } else {
+                                        // Assign files to storage apps based on hash of filename
+                                        const hash = this.hashString(file.name);
+                                        const storageAppIndex = hash % storageApps.length;
+                                        file.assignedApp = storageApps[storageAppIndex];
+                                    }
                                 }
                                 return file.assignedApp === app.name;
                             }).length;
@@ -896,9 +906,14 @@
 
                     // Ensure file has an assigned app (same logic as in computed property)
                     if (!file.assignedApp) {
-                        const hash = this.hashString(file.name);
-                        const storageAppIndex = hash % storageApps.length;
-                        file.assignedApp = storageApps[storageAppIndex];
+                        // Specific files should be assigned to Finder
+                        if (file.name === 'forgot_to_rename.pdf' || file.name === '37289132442.pdf') {
+                            file.assignedApp = 'Finder';
+                        } else {
+                            const hash = this.hashString(file.name);
+                            const storageAppIndex = hash % storageApps.length;
+                            file.assignedApp = storageApps[storageAppIndex];
+                        }
                     }
 
                     // Find the app and return its icon

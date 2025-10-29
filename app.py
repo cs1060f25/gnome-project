@@ -25,7 +25,8 @@ users = {
 
 # Mocked file storage (in-memory for prototype)
 # In production, this would be a database
-uploaded_files = []
+# Changed to dict with user email as key for proper file isolation
+uploaded_files = {}  # Format: {user_email: [list of files]}
 
 
 def allowed_file(filename):
@@ -124,13 +125,16 @@ def logout():
 
 @app.route('/api/files')
 def api_files():
-    """API endpoint to get list of all uploaded files."""
+    """API endpoint to get list of all uploaded files for the current user."""
     try:
         if 'user' not in session:
             return jsonify({"error": "Not authenticated"}), 401
         
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
         return jsonify({
-            "files": uploaded_files,
+            "files": user_files,
             "syncStatus": {
                 "Finder": {"status": "connected", "last_sync": datetime.now().isoformat()},
                 "Google Drive": {"status": "disconnected"},
@@ -166,7 +170,11 @@ def api_upload():
         # Get file size
         file_size = os.path.getsize(save_path)
         
-        # Add to uploaded files list
+        # Add to current user's uploaded files list
+        user_email = session['user']
+        if user_email not in uploaded_files:
+            uploaded_files[user_email] = []
+        
         file_info = {
             "name": filename,
             "uploadDate": datetime.now().isoformat(),
@@ -174,11 +182,12 @@ def api_upload():
             "size": file_size,
             "cloudUrl": None,
             "indexed": True,
-            "file_path": str(save_path)
+            "file_path": str(save_path),
+            "owner": user_email
         }
-        uploaded_files.append(file_info)
+        uploaded_files[user_email].append(file_info)
         
-        app.logger.info(f"File uploaded successfully: {filename} ({file_size} bytes)")
+        app.logger.info(f"File uploaded successfully: {filename} ({file_size} bytes) for user {user_email}")
         return jsonify({"message": f"Successfully uploaded {filename}"}), 200
         
     except Exception as exc:
@@ -188,7 +197,7 @@ def api_upload():
 
 @app.route('/api/search', methods=['POST'])
 def api_search():
-    """API endpoint for file search."""
+    """API endpoint for file search (searches only current user's files)."""
     if 'user' not in session:
         return jsonify({"error": "Not authenticated"}), 401
     
@@ -199,10 +208,14 @@ def api_search():
         return jsonify({"error": "Please enter a query"}), 400
     
     try:
-        # Perform mock search
-        results = mock_search(query, uploaded_files)
+        # Get current user's files only
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
         
-        app.logger.info(f"Search '{query}': {len(results)} results found")
+        # Perform mock search on user's files only
+        results = mock_search(query, user_files)
+        
+        app.logger.info(f"Search '{query}' for user {user_email}: {len(results)} results found")
         
         return jsonify({"results": results[:15]}), 200
         
@@ -213,16 +226,24 @@ def api_search():
 
 @app.route('/api/open-file/<filename>')
 def api_open_file(filename):
-    """Open a file (for local files)."""
+    """Open a file (for local files, only user's own files)."""
     if 'user' not in session:
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
-        # Find file in uploaded_files
-        file_info = next((f for f in uploaded_files if f['name'] == filename), None)
+        # Get current user's files only
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
+        # Find file in user's uploaded files only
+        file_info = next((f for f in user_files if f['name'] == filename), None)
         
         if not file_info:
             return jsonify({"error": "File not found"}), 404
+        
+        # Verify file belongs to current user
+        if file_info.get('owner') != user_email:
+            return jsonify({"error": "Unauthorized access"}), 403
         
         # For local files, return the file path
         # In production, this would open the file in the default application

@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app import app, uploaded_files, users
+from werkzeug.security import generate_password_hash
 
 
 class TestFileUploadSearch(unittest.TestCase):
@@ -106,10 +107,12 @@ class TestFileUploadSearch(unittest.TestCase):
         json_data = json.loads(response.data)
         self.assertIn('Successfully uploaded', json_data['message'])
         
-        # Verify file was added to uploaded_files
-        self.assertEqual(len(uploaded_files), 1)
-        self.assertEqual(uploaded_files[0]['name'], 'test_document.pdf')
-        self.assertEqual(uploaded_files[0]['source'], 'Finder')
+        # Verify file was added to user's uploaded_files
+        user_files = uploaded_files.get('test@example.com', [])
+        self.assertEqual(len(user_files), 1)
+        self.assertEqual(user_files[0]['name'], 'test_document.pdf')
+        self.assertEqual(user_files[0]['source'], 'Finder')
+        self.assertEqual(user_files[0]['owner'], 'test@example.com')
     
     def test_file_upload_no_file(self):
         """Test file upload with no file provided."""
@@ -148,21 +151,26 @@ class TestFileUploadSearch(unittest.TestCase):
         """Test retrieving list of files."""
         self.login()
         
-        # Add some test files
-        uploaded_files.append({
-            'name': 'file1.pdf',
-            'source': 'Finder',
-            'uploadDate': '2024-01-01T00:00:00',
-            'size': 1024,
-            'indexed': True
-        })
-        uploaded_files.append({
-            'name': 'file2.docx',
-            'source': 'Finder',
-            'uploadDate': '2024-01-02T00:00:00',
-            'size': 2048,
-            'indexed': True
-        })
+        # Add some test files for current user
+        user_email = 'test@example.com'
+        uploaded_files[user_email] = [
+            {
+                'name': 'file1.pdf',
+                'source': 'Finder',
+                'uploadDate': '2024-01-01T00:00:00',
+                'size': 1024,
+                'indexed': True,
+                'owner': user_email
+            },
+            {
+                'name': 'file2.docx',
+                'source': 'Finder',
+                'uploadDate': '2024-01-02T00:00:00',
+                'size': 2048,
+                'indexed': True,
+                'owner': user_email
+            }
+        ]
         
         response = self.client.get('/api/files')
         self.assertEqual(response.status_code, 200)
@@ -193,21 +201,26 @@ class TestFileUploadSearch(unittest.TestCase):
         """Test search with exact filename match."""
         self.login()
         
-        # Add test files
-        uploaded_files.append({
-            'name': 'project_report.pdf',
-            'source': 'Finder',
-            'uploadDate': '2024-01-01T00:00:00',
-            'size': 1024,
-            'indexed': True
-        })
-        uploaded_files.append({
-            'name': 'meeting_notes.docx',
-            'source': 'Finder',
-            'uploadDate': '2024-01-02T00:00:00',
-            'size': 2048,
-            'indexed': True
-        })
+        # Add test files for current user
+        user_email = 'test@example.com'
+        uploaded_files[user_email] = [
+            {
+                'name': 'project_report.pdf',
+                'source': 'Finder',
+                'uploadDate': '2024-01-01T00:00:00',
+                'size': 1024,
+                'indexed': True,
+                'owner': user_email
+            },
+            {
+                'name': 'meeting_notes.docx',
+                'source': 'Finder',
+                'uploadDate': '2024-01-02T00:00:00',
+                'size': 2048,
+                'indexed': True,
+                'owner': user_email
+            }
+        ]
         
         response = self.client.post('/api/search',
                                     json={'query': 'project_report.pdf'},
@@ -227,21 +240,26 @@ class TestFileUploadSearch(unittest.TestCase):
         """Test search with partial keyword match."""
         self.login()
         
-        # Add test files
-        uploaded_files.append({
-            'name': 'annual_report_2024.pdf',
-            'source': 'Finder',
-            'uploadDate': '2024-01-01T00:00:00',
-            'size': 1024,
-            'indexed': True
-        })
-        uploaded_files.append({
-            'name': 'meeting_notes.docx',
-            'source': 'Finder',
-            'uploadDate': '2024-01-02T00:00:00',
-            'size': 2048,
-            'indexed': True
-        })
+        # Add test files for current user
+        user_email = 'test@example.com'
+        uploaded_files[user_email] = [
+            {
+                'name': 'annual_report_2024.pdf',
+                'source': 'Finder',
+                'uploadDate': '2024-01-01T00:00:00',
+                'size': 1024,
+                'indexed': True,
+                'owner': user_email
+            },
+            {
+                'name': 'meeting_notes.docx',
+                'source': 'Finder',
+                'uploadDate': '2024-01-02T00:00:00',
+                'size': 2048,
+                'indexed': True,
+                'owner': user_email
+            }
+        ]
         
         response = self.client.post('/api/search',
                                     json={'query': 'report'},
@@ -260,14 +278,18 @@ class TestFileUploadSearch(unittest.TestCase):
         """Test search with no matching results."""
         self.login()
         
-        # Add test files
-        uploaded_files.append({
-            'name': 'document.pdf',
-            'source': 'Finder',
-            'uploadDate': '2024-01-01T00:00:00',
-            'size': 1024,
-            'indexed': True
-        })
+        # Add test files for current user
+        user_email = 'test@example.com'
+        uploaded_files[user_email] = [
+            {
+                'name': 'document.pdf',
+                'source': 'Finder',
+                'uploadDate': '2024-01-01T00:00:00',
+                'size': 1024,
+                'indexed': True,
+                'owner': user_email
+            }
+        ]
         
         response = self.client.post('/api/search',
                                     json={'query': 'nonexistent'},
@@ -293,14 +315,18 @@ class TestFileUploadSearch(unittest.TestCase):
         """Test successfully opening a file."""
         self.login()
         
-        # Add a test file
+        # Add a test file for current user
+        user_email = 'test@example.com'
         test_file_path = os.path.join(self.test_upload_dir, 'test.pdf')
-        uploaded_files.append({
-            'name': 'test.pdf',
-            'source': 'Finder',
-            'file_path': test_file_path,
-            'indexed': True
-        })
+        uploaded_files[user_email] = [
+            {
+                'name': 'test.pdf',
+                'source': 'Finder',
+                'file_path': test_file_path,
+                'indexed': True,
+                'owner': user_email
+            }
+        ]
         
         response = self.client.get('/api/open-file/test.pdf')
         self.assertEqual(response.status_code, 200)
@@ -317,6 +343,65 @@ class TestFileUploadSearch(unittest.TestCase):
         # Verify session is cleared
         with self.client.session_transaction() as sess:
             self.assertNotIn('user', sess)
+    
+    def test_user_file_isolation(self):
+        """
+        Test that users can only see and access their own files.
+        This tests the fix for the user file isolation bug.
+        """
+        # Create second user
+        users['other@example.com'] = generate_password_hash('password456')
+        
+        # Login as first user and upload a file
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'test@example.com'
+        
+        data = {
+            'file': (BytesIO(b'User 1 private file'), 'user1_private.pdf')
+        }
+        response = self.client.post('/api/upload',
+                                    data=data,
+                                    content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify first user can see their file
+        response = self.client.get('/api/files')
+        json_data = json.loads(response.data)
+        self.assertEqual(len(json_data['files']), 1)
+        self.assertEqual(json_data['files'][0]['name'], 'user1_private.pdf')
+        
+        # Logout and login as second user
+        self.client.get('/logout')
+        with self.client.session_transaction() as sess:
+            sess['user'] = 'other@example.com'
+        
+        # Upload a file as second user
+        data = {
+            'file': (BytesIO(b'User 2 private file'), 'user2_private.pdf')
+        }
+        response = self.client.post('/api/upload',
+                                    data=data,
+                                    content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify second user can ONLY see their own file, not user1's file
+        response = self.client.get('/api/files')
+        json_data = json.loads(response.data)
+        self.assertEqual(len(json_data['files']), 1)
+        self.assertEqual(json_data['files'][0]['name'], 'user2_private.pdf')
+        self.assertNotIn('user1_private.pdf', [f['name'] for f in json_data['files']])
+        
+        # Try to search - should only find user2's files
+        response = self.client.post('/api/search',
+                                    json={'query': 'private'},
+                                    content_type='application/json')
+        json_data = json.loads(response.data)
+        self.assertEqual(len(json_data['results']), 1)
+        self.assertEqual(json_data['results'][0]['name'], 'user2_private.pdf')
+        
+        # Try to open user1's file as user2 - should fail
+        response = self.client.get('/api/open-file/user1_private.pdf')
+        self.assertEqual(response.status_code, 404)  # File not found (for this user)
 
 
 if __name__ == '__main__':

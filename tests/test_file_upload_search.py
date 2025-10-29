@@ -344,6 +344,60 @@ class TestFileUploadSearch(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertNotIn('user', sess)
     
+    def test_duplicate_filename_handling(self):
+        """
+        Test that uploading a file with the same name updates the existing entry
+        instead of creating a duplicate. This tests the fix for the duplicate
+        filename handling bug.
+        """
+        self.login()
+        
+        # Upload a file
+        data = {
+            'file': (BytesIO(b'Version 1 content'), 'document.pdf')
+        }
+        response = self.client.post('/api/upload',
+                                    data=data,
+                                    content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify file was added
+        user_files = uploaded_files.get('test@example.com', [])
+        self.assertEqual(len(user_files), 1)
+        first_upload_date = user_files[0]['uploadDate']
+        
+        # Upload same filename again with different content
+        data = {
+            'file': (BytesIO(b'Version 2 content - updated'), 'document.pdf')
+        }
+        response = self.client.post('/api/upload',
+                                    data=data,
+                                    content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertIn('re-uploaded', json_data['message'].lower())
+        
+        # Verify only ONE entry exists (no duplicate)
+        user_files = uploaded_files.get('test@example.com', [])
+        self.assertEqual(len(user_files), 1)
+        
+        # Verify the entry was updated (different upload date)
+        second_upload_date = user_files[0]['uploadDate']
+        self.assertNotEqual(first_upload_date, second_upload_date)
+        
+        # Verify file list API returns only one file
+        response = self.client.get('/api/files')
+        json_data = json.loads(response.data)
+        self.assertEqual(len(json_data['files']), 1)
+        self.assertEqual(json_data['files'][0]['name'], 'document.pdf')
+        
+        # Verify search returns only one result
+        response = self.client.post('/api/search',
+                                    json={'query': 'document'},
+                                    content_type='application/json')
+        json_data = json.loads(response.data)
+        self.assertEqual(len(json_data['results']), 1)
+    
     def test_user_file_isolation(self):
         """
         Test that users can only see and access their own files.

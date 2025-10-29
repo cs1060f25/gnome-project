@@ -163,18 +163,26 @@ def api_upload():
         # Secure the filename
         filename = secure_filename(file.filename)
         
-        # Save file
+        # Check for duplicate filename for this user
+        user_email = session['user']
+        if user_email not in uploaded_files:
+            uploaded_files[user_email] = []
+        
+        # Check if file with same name already exists for this user
+        existing_file_index = None
+        for idx, f in enumerate(uploaded_files[user_email]):
+            if f['name'] == filename:
+                existing_file_index = idx
+                break
+        
+        # Save file (will overwrite if exists)
         save_path = app.config['UPLOAD_FOLDER'] / filename
         file.save(save_path)
         
         # Get file size
         file_size = os.path.getsize(save_path)
         
-        # Add to current user's uploaded files list
-        user_email = session['user']
-        if user_email not in uploaded_files:
-            uploaded_files[user_email] = []
-        
+        # Create file info
         file_info = {
             "name": filename,
             "uploadDate": datetime.now().isoformat(),
@@ -185,7 +193,16 @@ def api_upload():
             "file_path": str(save_path),
             "owner": user_email
         }
-        uploaded_files[user_email].append(file_info)
+        
+        # Update existing entry or add new one
+        if existing_file_index is not None:
+            # Update existing file entry instead of creating duplicate
+            uploaded_files[user_email][existing_file_index] = file_info
+            app.logger.info(f"File re-uploaded (updated): {filename} ({file_size} bytes) for user {user_email}")
+            return jsonify({"message": f"Successfully re-uploaded {filename} (previous version replaced)"}), 200
+        else:
+            # Add new file entry
+            uploaded_files[user_email].append(file_info)
         
         app.logger.info(f"File uploaded successfully: {filename} ({file_size} bytes) for user {user_email}")
         return jsonify({"message": f"Successfully uploaded {filename}"}), 200

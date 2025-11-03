@@ -1,3 +1,22 @@
 flask==3.0.3
 werkzeug==3.0.4
 
+# Semantic Search Dependencies
+# Note: voyageai is optional - can use any embedding service
+# voyageai
+PyMuPDF
+Pillow
+python-dotenv
+
+# Multi-format file support
+pytesseract
+python-docx
+python-pptx
+openpyxl
+
+# Optional: Cloud sync dependencies
+# google-auth-oauthlib
+# google-auth-httplib2
+# google-api-python-client
+# msal
+# requests

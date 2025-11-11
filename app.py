@@ -357,6 +357,224 @@ def api_disconnect(source):
     }), 501
 
 
+# === AI AUTO-ORGANIZATION ENDPOINTS (CS1060-160) ===
+
+@app.route('/api/organize/suggestions', methods=['GET'])
+def api_organize_suggestions():
+    """
+    Get AI-powered organization suggestions for user's files.
+    Implements CS1060-160: Auto-organize files with AI suggestions.
+    """
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
+        if not user_files:
+            return jsonify({"suggestions": []}), 200
+        
+        # Initialize organizer
+        from semantic.vector_database import VectorDatabase
+        from semantic.auto_organizer import FileOrganizer
+        
+        vector_db = VectorDatabase()
+        organizer = FileOrganizer(vector_db)
+        
+        # Generate suggestions
+        suggestions = organizer.generate_organization_suggestions(user_files)
+        
+        app.logger.info(f"Generated {len(suggestions)} suggestions for user {user_email}")
+        
+        return jsonify({"suggestions": suggestions}), 200
+        
+    except Exception as exc:
+        app.logger.error(f"Failed to generate suggestions: {exc}")
+        return jsonify({"error": f"Failed to generate suggestions: {str(exc)}"}), 500
+
+
+@app.route('/api/organize/apply', methods=['POST'])
+def api_organize_apply():
+    """
+    Apply an organization suggestion.
+    Creates virtual folders and updates file metadata.
+    """
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        data = request.get_json()
+        suggestion_id = data.get('suggestion_id')
+        folder_name = data.get('folder_name')
+        file_names = data.get('files', [])
+        tags = data.get('tags', [])
+        
+        if not folder_name or not file_names:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
+        # Update file metadata with folder and tags
+        updated_count = 0
+        for file_info in user_files:
+            if file_info['name'] in file_names:
+                # Add folder information
+                file_info['folder'] = folder_name
+                # Add tags
+                if 'tags' not in file_info:
+                    file_info['tags'] = []
+                file_info['tags'] = list(set(file_info['tags'] + tags))
+                updated_count += 1
+        
+        app.logger.info(f"Applied suggestion {suggestion_id}: moved {updated_count} files to '{folder_name}'")
+        
+        return jsonify({
+            "message": f"Successfully organized {updated_count} files",
+            "folder": folder_name,
+            "files_updated": updated_count
+        }), 200
+        
+    except Exception as exc:
+        app.logger.error(f"Failed to apply suggestion: {exc}")
+        return jsonify({"error": f"Failed to apply suggestion: {str(exc)}"}), 500
+
+
+@app.route('/api/organize/undo', methods=['POST'])
+def api_organize_undo():
+    """
+    Undo the last organization action.
+    Removes folder and tag assignments.
+    """
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        data = request.get_json()
+        file_names = data.get('files', [])
+        
+        if not file_names:
+            return jsonify({"error": "No files specified"}), 400
+        
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
+        # Remove folder and tags
+        updated_count = 0
+        for file_info in user_files:
+            if file_info['name'] in file_names:
+                file_info.pop('folder', None)
+                file_info.pop('tags', None)
+                updated_count += 1
+        
+        app.logger.info(f"Undid organization for {updated_count} files")
+        
+        return jsonify({
+            "message": f"Successfully undid organization for {updated_count} files",
+            "files_updated": updated_count
+        }), 200
+        
+    except Exception as exc:
+        app.logger.error(f"Failed to undo organization: {exc}")
+        return jsonify({"error": f"Failed to undo: {str(exc)}"}), 500
+
+
+@app.route('/api/file/rename', methods=['POST'])
+def api_file_rename():
+    """
+    Rename a file with AI suggestion or custom name.
+    """
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        data = request.get_json()
+        old_name = data.get('old_name')
+        new_name = data.get('new_name')
+        
+        if not old_name or not new_name:
+            return jsonify({"error": "Both old_name and new_name required"}), 400
+        
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
+        # Find and update file
+        file_found = False
+        for file_info in user_files:
+            if file_info['name'] == old_name:
+                # Update filename
+                old_path = Path(file_info.get('file_path', ''))
+                if old_path.exists():
+                    new_path = old_path.parent / new_name
+                    old_path.rename(new_path)
+                    file_info['file_path'] = str(new_path)
+                
+                file_info['name'] = new_name
+                file_info['renamed'] = True
+                file_info['original_name'] = old_name
+                file_found = True
+                break
+        
+        if not file_found:
+            return jsonify({"error": "File not found"}), 404
+        
+        app.logger.info(f"Renamed file '{old_name}' to '{new_name}' for user {user_email}")
+        
+        return jsonify({
+            "message": f"Successfully renamed file to '{new_name}'",
+            "new_name": new_name
+        }), 200
+        
+    except Exception as exc:
+        app.logger.error(f"Failed to rename file: {exc}")
+        return jsonify({"error": f"Failed to rename: {str(exc)}"}), 500
+
+
+@app.route('/api/file/tag', methods=['POST'])
+def api_file_tag():
+    """
+    Add tags to a file.
+    """
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        data = request.get_json()
+        file_name = data.get('file_name')
+        tags = data.get('tags', [])
+        
+        if not file_name or not tags:
+            return jsonify({"error": "file_name and tags required"}), 400
+        
+        user_email = session['user']
+        user_files = uploaded_files.get(user_email, [])
+        
+        # Find and update file
+        file_found = False
+        for file_info in user_files:
+            if file_info['name'] == file_name:
+                if 'tags' not in file_info:
+                    file_info['tags'] = []
+                file_info['tags'] = list(set(file_info['tags'] + tags))
+                file_found = True
+                break
+        
+        if not file_found:
+            return jsonify({"error": "File not found"}), 404
+        
+        app.logger.info(f"Added tags {tags} to file '{file_name}' for user {user_email}")
+        
+        return jsonify({
+            "message": f"Successfully added tags to '{file_name}'",
+            "tags": tags
+        }), 200
+        
+    except Exception as exc:
+        app.logger.error(f"Failed to add tags: {exc}")
+        return jsonify({"error": f"Failed to add tags: {str(exc)}"}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5001)
 

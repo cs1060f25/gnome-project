@@ -71,8 +71,10 @@ except ImportError as e:
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = Path(__file__).resolve().parent / "uploads"
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max
-app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'pptx', 'xlsx'}
-app.secret_key = secrets.token_hex(16)
+app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'pptx', 'xlsx', 'csv', 'md', 'gif', 'webp'}
+# Use environment variable for secret key, or a stable default for development
+# This prevents session invalidation on server restart
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'gnome-dev-secret-key-change-in-production')
 
 UPLOAD_FOLDER: Path = app.config["UPLOAD_FOLDER"]
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -307,9 +309,8 @@ def api_upload():
 
     try:
         if SEMANTIC_SEARCH_ENABLED and VOYAGE_CLIENT and PINECONE_IDX:
-            # Full semantic processing
-            images = parse_local_pdf(str(save_path))
-            embedding = embed_pdf(images, VOYAGE_CLIENT)
+            # Full semantic processing - use process_file for all file types
+            embedding = process_file(str(save_path), VOYAGE_CLIENT)
             store_embeddings(filename, PINECONE_IDX, embedding, NAMESPACE)
             
             # Store in database
@@ -339,7 +340,13 @@ def api_upload():
                 "file_path": str(save_path),
                 "owner": user_email
             }
-            uploaded_files[user_email].append(file_info)
+            
+            # BUG FIX: Check for existing file with same name and update instead of duplicate
+            existing_idx = next((i for i, f in enumerate(uploaded_files[user_email]) if f.get('name') == filename), None)
+            if existing_idx is not None:
+                uploaded_files[user_email][existing_idx] = file_info
+            else:
+                uploaded_files[user_email].append(file_info)
         
         return jsonify({"message": f"Successfully uploaded and indexed {filename}"}), 200
     except Exception as exc:
@@ -570,7 +577,8 @@ def api_open_file(filename):
         else:
             user_email = session['user']
             user_files = uploaded_files.get(user_email, [])
-            file_info = next((f for f in user_files if f['name'] == filename), None)
+            # Use 'name' key for mock storage (consistent with how files are stored)
+            file_info = next((f for f in user_files if f.get('name') == filename), None)
         
         if not file_info:
             return jsonify({"error": "File not found"}), 404
@@ -580,8 +588,12 @@ def api_open_file(filename):
         if file_source == 'Finder':
             import subprocess
             file_path = file_info.get('file_path')
-            if file_path:
-                subprocess.run(['open', file_path], check=True)
+            # BUG FIX: Check if file_path exists before trying to open
+            if not file_path:
+                return jsonify({"error": "File path not found"}), 404
+            if not Path(file_path).exists():
+                return jsonify({"error": "File no longer exists at original location"}), 404
+            subprocess.run(['open', file_path], check=True)
             return jsonify({"message": "File opened in Finder"}), 200
             
         elif file_source == 'Google Drive':

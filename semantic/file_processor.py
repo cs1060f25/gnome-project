@@ -229,10 +229,10 @@ def get_supported_extensions() -> List[str]:
     return [
         '.pdf',
         '.png', '.jpg', '.jpeg', '.gif', '.webp',
-        '.docx', '.doc',
-        '.pptx', '.ppt',
-        '.xlsx', '.xls', '.csv',
-        '.txt', '.md', '.rtf'
+        '.docx',  # Note: .doc (old format) not supported - use .docx
+        '.pptx',  # Note: .ppt (old format) not supported - use .pptx
+        '.xlsx', '.csv',  # Note: .xls (old format) not supported - use .xlsx
+        '.txt', '.md'  # Note: .rtf not supported
     ]
 
 

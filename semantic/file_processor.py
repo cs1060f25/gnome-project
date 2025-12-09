@@ -251,3 +251,5 @@ def is_supported_file(file_path: Union[str, Path]) -> bool:
     
     return path.suffix.lower() in get_supported_extensions()
 
+
+

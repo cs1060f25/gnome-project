@@ -355,3 +355,4 @@ def compute_file_hash(file_path: str) -> str:
             sha256.update(chunk)
     return sha256.hexdigest()
 
+

@@ -81,3 +81,5 @@ def parse_binary_pdf(binary_data: BytesIO, zoom: float = 1.0) -> List[Image.Imag
 
     return images
 
+
+

@@ -2,8 +2,37 @@
 Embedding engine for generating vector embeddings from text and files.
 Note: This module can work with any embedding service. Configure your client separately.
 """
-from typing import List, Optional
-from PIL import Image
+from __future__ import annotations
+from typing import List, Optional, TYPE_CHECKING, Any
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from PIL import Image
+
+def init_voyage():
+    """
+    Initialize Voyage AI client.
+    
+    Returns:
+        Voyage AI Client object or None if not available
+    """
+    try:
+        from voyageai import Client
+        api_key = os.environ.get('VOYAGE_API_KEY')
+        if api_key:
+            return Client(api_key=api_key)
+        else:
+            logger.warning("VOYAGE_API_KEY not set")
+            return None
+    except ImportError:
+        logger.warning("voyageai package not installed")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to initialize Voyage client: {e}")
+        return None
 
 
 def embed_pdf(images: List[Image.Image], embedding_client) -> List[float]:
@@ -24,8 +53,14 @@ def embed_pdf(images: List[Image.Image], embedding_client) -> List[float]:
         raise ValueError("No embedding client was provided.")
     if not isinstance(images, list):
         raise TypeError("PDF images must be a list of PIL images.")
-    if not all(isinstance(img, Image.Image) for img in images):
-        raise TypeError("All images must be PIL Images.")
+    
+    # Check if images are PIL Images (runtime check)
+    try:
+        from PIL import Image as PILImage
+        if not all(isinstance(img, PILImage.Image) for img in images):
+            raise TypeError("All images must be PIL Images.")
+    except ImportError:
+        logger.warning("PIL not installed - skipping image type validation")
 
     try:
         # This is a generic interface - adapt based on your embedding service
@@ -119,4 +154,6 @@ def embed_text(text: str, embedding_client) -> List[float]:
             raise ValueError("Embedding client does not support text embedding")
     except Exception as e:
         raise Exception(f"Failed to embed text: {str(e)}.")
+
+
 

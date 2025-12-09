@@ -159,3 +159,81 @@ def create_vector_database(db_type: str = 'memory', **config) -> VectorDatabase:
     else:
         raise ValueError(f"Unsupported database type: {db_type}")
 
+
+# Global in-memory database instance
+_GLOBAL_DB = VectorDatabase()
+
+
+def init_pinecone_idx():
+    """
+    Initialize vector database (compatibility function).
+    Returns the global vector database instance.
+    """
+    global _GLOBAL_DB
+    return _GLOBAL_DB
+
+
+def store_embeddings(filename: str, db, embedding: List[float], namespace: str = None) -> None:
+    """
+    Store embeddings for a file (compatibility function).
+    
+    Args:
+        filename: Name of the file
+        db: Vector database instance
+        embedding: Embedding vector
+        namespace: Optional namespace
+    """
+    if db is None:
+        db = _GLOBAL_DB
+    
+    metadata = {
+        'filename': filename,
+        'namespace': namespace
+    }
+    
+    # Use filename as the ID
+    file_id = f"{namespace}_{filename}" if namespace else filename
+    db.store_embedding(file_id, embedding, metadata)
+
+
+def semantic_search(query: str, db, voyage_client, top_k: int = 10, namespace: str = None) -> Dict:
+    """
+    Perform semantic search (compatibility function).
+    
+    Args:
+        query: Search query
+        db: Vector database instance
+        voyage_client: Voyage AI client for embedding the query
+        top_k: Number of results to return
+        namespace: Optional namespace
+    
+    Returns:
+        Dict with 'matches' list
+    """
+    if db is None:
+        db = _GLOBAL_DB
+    
+    # Get query embedding
+    try:
+        from .embedding_engine import embed_query
+        query_embedding = embed_query(query, voyage_client)
+    except Exception as e:
+        logger.error(f"Failed to embed query: {e}")
+        return {'matches': []}
+    
+    # Search
+    results = db.search(query_embedding, top_k, namespace)
+    
+    # Convert to expected format
+    matches = []
+    for result in results:
+        matches.append({
+            'id': result['id'],
+            'score': result['similarity'],
+            'metadata': result['metadata']
+        })
+    
+    return {'matches': matches}
+
+
+

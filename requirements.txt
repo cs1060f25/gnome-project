@@ -1,22 +1,27 @@
-flask==3.0.3
-werkzeug==3.0.4
+# Core Flask
+flask
+werkzeug
 
-# Semantic Search Dependencies
-# Note: voyageai is optional - can use any embedding service
-# voyageai
+# Semantic Search / AI
+voyageai
 PyMuPDF
 Pillow
 python-dotenv
 
-# Multi-format file support
+# Google Drive sync
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+
+# OneDrive sync
+msal
+requests
+
+# Multi-format support
 pytesseract
 python-docx
 python-pptx
 openpyxl
 
-# Optional: Cloud sync dependencies
-# google-auth-oauthlib
-# google-auth-httplib2
-# google-api-python-client
-# msal
-# requests
+# Database
+# watchdog (real-time file watching - optional)
